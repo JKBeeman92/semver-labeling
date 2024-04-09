@@ -26,7 +26,7 @@ jobs:
 
       - name: Check PR title for semver
         id: check_version
-        run: node .github/actions/check-semver.js
+        run: node functions/check-semver.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SEMVER_LABELS: ${{ inputs.semver_labels }}
