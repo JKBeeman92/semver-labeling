@@ -12,11 +12,11 @@ let foundMatch = true;
 if (!versionMatch) {
   foundMatch = false;
 } else if (patch !== '0') {
-  labelToApply = process.env.semver_labels.patch_label;
+  labelToApply = process.env.semver_labels.patchLabel;
 } else if (minor !== '0') {
-  labelToApply = process.env.semver_labels.minor_label;
+  labelToApply = process.env.semver_labels.minorLabel;
 } else if (major !== '0') {
-  labelToApply = process.env.semver_labels.major_label;
+  labelToApply = process.env.semver_labels.majorLabel;
 }
 
 console.log(`This is a ${labelToApply} version`);
