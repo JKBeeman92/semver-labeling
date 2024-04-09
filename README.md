@@ -26,6 +26,6 @@ jobs:
     steps:
 
       - name: Apply Semver Label
-        uses: @JKBeeman92/semver-labeling
+        uses: JKBeeman92/semver-labeling@latest
         with:
           semver_labels: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
