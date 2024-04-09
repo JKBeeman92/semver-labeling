@@ -1,8 +1,10 @@
 name: PR Semver Labeling
 author: JKBeeman92
 description: A simple, configurable action to give semver labeling based on the PR title
-color: green
-icon: arrow-up
+
+branding:
+  color: green
+  icon: arrow-up
 
 on:
   workflow_call:
