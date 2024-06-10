@@ -29,4 +29,4 @@ jobs:
         uses: JKBeeman92/semver-labeling@1.0.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          labels: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
+          semver_labels: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
