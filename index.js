@@ -1,13 +1,12 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
+const { GitHub, context } = require('@actions/github');
 
 async function run() {
   try {
     const token = core.getInput('token');
-    const labelsInput = core.getInput('semver_labels');
+    const labelsInput = core.getInput('labels');
     const labels = JSON.parse(labelsInput);
-    const { context } = github;
-    const { pull_request: pr } = context.payload;
+    const pr = context.payload.pull_request;
 
     if (!pr) {
       console.log('No pull request, exiting');
@@ -30,7 +29,7 @@ async function run() {
         labelToAdd = labels.majorLabel;
       }
 
-      const octokit = github.getOctokit(token);
+      const octokit = new GitHub(token);
       await octokit.issues.addLabels({
         ...context.repo,
         issue_number: pr.number,
