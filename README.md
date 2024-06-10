@@ -13,24 +13,20 @@ This action accepts the following inputs:
 Here's an example of how to use this action in a workflow:
 
 ```yaml
-name: PR Semver Labeling
-
+name: PR Semver Labeler
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
-  semver labeling:
+  label:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Use My Action
-        uses: JKBeeman92/pr-semver-labeling@v1
+      - name: Run PR Labeler
+        uses: JKBeeman92/semver-labeling@1.0.3
         with:
-          semver_labels: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
-          pr_title: ${{ github.event.pull_request.title }}
-          repository: ${{ github.repository }}
-          pr_number: ${{ github.event.pull_request.number }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
