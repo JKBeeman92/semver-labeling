@@ -9,8 +9,8 @@ inputs:
     description: 'GitHub token'
     required: true
   semver_labels:
-    description: 'JSON string of labels'
+    description: 'JSON string of semver labels'
     required: true
 runs:
-  using: 'node20'
+  using: 'node14'
   main: 'index.js'

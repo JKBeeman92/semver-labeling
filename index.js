@@ -4,8 +4,8 @@ const { GitHub, context } = require('@actions/github');
 async function run() {
   try {
     const token = core.getInput('token');
-    const labelsInput = core.getInput('labels');
-    const labels = JSON.parse(labelsInput);
+    const semverLabelsInput = core.getInput('semver_labels');
+    const semverLabels = JSON.parse(semverLabelsInput);
     const pr = context.payload.pull_request;
 
     if (!pr) {
@@ -22,11 +22,11 @@ async function run() {
       let labelToAdd;
 
       if (patch !== '0') {
-        labelToAdd = labels.patchLabel;
+        labelToAdd = semverLabels.patchLabel;
       } else if (minor !== '0') {
-        labelToAdd = labels.minorLabel;
+        labelToAdd = semverLabels.minorLabel;
       } else {
-        labelToAdd = labels.majorLabel;
+        labelToAdd = semverLabels.majorLabel;
       }
 
       const octokit = new GitHub(token);
