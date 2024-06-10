@@ -21,10 +21,8 @@ on:
     outputs:
       label_to_apply:
         description: "The label to apply"
-        value: ${{ steps.check_version.outputs.label_to_apply }}
       found_match:
         description: "Whether a semver match was found"
-        value: ${{ steps.check_version.outputs.found_match }}
 
 jobs:
   check-pr-title:
@@ -46,8 +44,7 @@ jobs:
         id: check_version
         run: node functions/check-semver.js
         env:
-          GITHUB_TOKEN: ${{ inputs.github_token }}
-          SEMVER_LABELS: ${{ inputs.semver_labels }}
+          SEMVER_LABELS: ${{ fromJson(inputs.semver_labels) }}
           PR_TITLE: ${{ inputs.pr_title }}
 
       - name: Check Outputs
@@ -57,9 +54,18 @@ jobs:
 
       - name: Label PR
         if: steps.check_version.outputs.found_match == 'true'
-        run: gh issue edit "$NUMBER" --add-label "$LABELS"
+        run: |
+          curl \
+            -X POST \
+            -H "Authorization: token ${{ env.GH_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ env.GH_REPO }}/issues/${{ env.NUMBER }}/labels \
+            -d '{
+              "labels": ["${{ env.LABELS }}"]
+            }'
         env:
           GH_TOKEN: ${{ inputs.github_token }}
           GH_REPO: ${{ inputs.repository }}
           NUMBER: ${{ inputs.pr_number }}
           LABELS: "${{ steps.check_version.outputs.label_to_apply }}"
+
