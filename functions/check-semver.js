@@ -1,7 +1,6 @@
-const github = require('@actions/github');
 const core = require('@actions/core');
 
-const title = github.context.payload.pull_request.title;
+const title = process.env.PR_TITLE;
 const semverRegex = /\b\d+(\.\d+){2}\b/;
 const versionMatch = title.match(semverRegex);
 
