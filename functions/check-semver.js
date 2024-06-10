@@ -1,22 +1,24 @@
-const github = require('@actions/github');
 const core = require('@actions/core');
 
-const title = github.context.payload.pull_request.title;
+const title = process.env.PR_TITLE;
 const semverRegex = /\b\d+(\.\d+){2}\b/;
 const versionMatch = title.match(semverRegex);
 
-const [major, minor, patch] = versionMatch[0].split('.');
 let labelToApply = '';
-let foundMatch = true;
+let foundMatch = false;
 
-if (!versionMatch) {
-  foundMatch = false;
-} else if (patch !== '0') {
-  labelToApply = process.env.SEMVER_LABELS.patchLabel;
-} else if (minor !== '0') {
-  labelToApply = process.env.SEMVER_LABELS.minorLabel;
-} else if (major !== '0') {
-  labelToApply = process.env.SEMVER_LABELS.majorLabel;
+if (versionMatch) {
+  const [major, minor, patch] = versionMatch[0].split('.');
+  const semverLabels = JSON.parse(process.env.SEMVER_LABELS);
+
+  foundMatch = true;
+  if (patch !== '0') {
+    labelToApply = semverLabels.patchLabel;
+  } else if (minor !== '0') {
+    labelToApply = semverLabels.minorLabel;
+  } else if (major !== '0') {
+    labelToApply = semverLabels.majorLabel;
+  }
 }
 
 console.log(`This is a ${labelToApply} version`);

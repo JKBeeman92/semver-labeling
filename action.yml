@@ -1,11 +1,4 @@
 name: PR Semver Labeling
-author: JKBeeman92
-description: A simple, configurable action to give semver labeling based on the PR title
-
-branding:
-  color: green
-  icon: arrow-up
-
 on:
   workflow_call:
     inputs:
@@ -13,6 +6,22 @@ on:
         required: true
         type: string
         default: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
+      pr_title:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+      pr_number:
+        required: true
+        type: string
+    outputs:
+      label_to_apply:
+        description: "The label to apply"
+        value: ${{ jobs.check-pr-title.outputs.label_to_apply }}
+      found_match:
+        description: "Whether a semver match was found"
+        value: ${{ jobs.check-pr-title.outputs.found_match }}
 
 jobs:
   check-pr-title:
@@ -47,6 +56,6 @@ jobs:
         run: gh issue edit "$NUMBER" --add-label "$LABELS"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.number }}
+          GH_REPO: ${{ inputs.repository }}
+          NUMBER: ${{ inputs.pr_number }}
           LABELS: "${{ steps.check_version.outputs.label_to_apply }}"
