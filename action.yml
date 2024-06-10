@@ -1,12 +1,9 @@
 name: 'PR Semver Labeler'
 description: 'Add a label to PRs based on semver in title'
-author: JKBeeman92
-  color: green
-  icon: arrow-up
-
+author: 'JKBeeman92'
 branding:
-  color: green
-  icon: arrow-up
+  color: 'green'
+  icon: 'arrow-up'
 inputs:
   token:
     description: 'GitHub token'
