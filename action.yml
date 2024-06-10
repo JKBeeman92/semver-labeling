@@ -15,23 +15,26 @@ on:
       pr_number:
         required: true
         type: string
+      github_token:
+        required: true
+        type: string
     outputs:
       label_to_apply:
         description: "The label to apply"
-        value: ${{ jobs.check-pr-title.outputs.label_to_apply }}
+        value: ${{ steps.check_version.outputs.label_to_apply }}
       found_match:
         description: "Whether a semver match was found"
-        value: ${{ jobs.check-pr-title.outputs.found_match }}
+        value: ${{ steps.check_version.outputs.found_match }}
 
 jobs:
   check-pr-title:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
           node-version: '20'
 
@@ -43,8 +46,9 @@ jobs:
         id: check_version
         run: node functions/check-semver.js
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ inputs.github_token }}
           SEMVER_LABELS: ${{ inputs.semver_labels }}
+          PR_TITLE: ${{ inputs.pr_title }}
 
       - name: Check Outputs
         run: |
@@ -55,7 +59,7 @@ jobs:
         if: steps.check_version.outputs.found_match == 'true'
         run: gh issue edit "$NUMBER" --add-label "$LABELS"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ inputs.github_token }}
           GH_REPO: ${{ inputs.repository }}
           NUMBER: ${{ inputs.pr_number }}
           LABELS: "${{ steps.check_version.outputs.label_to_apply }}"
