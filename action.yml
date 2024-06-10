@@ -21,13 +21,16 @@ on:
     outputs:
       label_to_apply:
         description: "The label to apply"
+        value: ${{ jobs.check-pr-title.steps.check_version.outputs.label_to_apply }}
       found_match:
         description: "Whether a semver match was found"
+        value: ${{ jobs.check-pr-title.steps.check_version.outputs.found_match }}
 
 jobs:
   check-pr-title:
     runs-on: ubuntu-latest
     steps:
+    
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -40,6 +43,11 @@ jobs:
         run: |
           npm install @actions/github @actions/core --force
 
+      - name: Check Inputs
+        run: |
+          echo ${{ inputs.semver_labels }}
+          echo ${{ inputs.pr_title }}
+          
       - name: Check PR title for semver
         id: check_version
         run: node functions/check-semver.js
