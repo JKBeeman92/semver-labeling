@@ -21,10 +21,8 @@ on:
     outputs:
       label_to_apply:
         description: "The label to apply"
-        value: ${{ steps.check_version.outputs.label_to_apply }}
       found_match:
         description: "Whether a semver match was found"
-        value: ${{ steps.check_version.outputs.found_match }}
 
 jobs:
   check-pr-title:
@@ -46,8 +44,7 @@ jobs:
         id: check_version
         run: node functions/check-semver.js
         env:
-          GITHUB_TOKEN: ${{ inputs.github_token }}
-          SEMVER_LABELS: ${{ inputs.semver_labels }}
+          SEMVER_LABELS: ${{ fromJson(inputs.semver_labels) }}
           PR_TITLE: ${{ inputs.pr_title }}
 
       - name: Check Outputs
