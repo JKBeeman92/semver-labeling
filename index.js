@@ -4,7 +4,7 @@ const github = require('@actions/github');
 async function run() {
   try {
     const token = core.getInput('token');
-    const labelsInput = core.getInput('labels');
+    const labelsInput = core.getInput('semver_labels');
     const labels = JSON.parse(labelsInput);
     const { context } = github;
     const { pull_request: pr } = context.payload;
