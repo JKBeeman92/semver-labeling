@@ -29,7 +29,7 @@ async function run() {
         labelToAdd = semverLabels.majorLabel;
       }
 
-      const octokit = github.getOctokit(token);
+      const octokit = new github.getOctokit(token);
       await octokit.issues.addLabels({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
