@@ -1,0 +1,15 @@
+{
+  "name": "semver-labelomg",
+  "version": "1.0.3",
+  "description": "GitHub Action to add a label to PRs based on semver in title",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "JKBeeman92",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0"
+  }
+}

@@ -1,71 +1,12 @@
-name: PR Semver Labeling
-on:
-  workflow_call:
-    inputs:
-      semver_labels:
-        required: true
-        type: string
-        default: '{"majorLabel": "major-release","minorLabel": "minor-release", "patchLabel": "patch-release"}'
-      pr_title:
-        required: true
-        type: string
-      repository:
-        required: true
-        type: string
-      pr_number:
-        required: true
-        type: string
-      github_token:
-        required: true
-        type: string
-    outputs:
-      label_to_apply:
-        description: "The label to apply"
-      found_match:
-        description: "Whether a semver match was found"
-
-jobs:
-  check-pr-title:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          npm install @actions/github @actions/core --force
-
-      - name: Check PR title for semver
-        id: check_version
-        run: node functions/check-semver.js
-        env:
-          SEMVER_LABELS: ${{ fromJson(inputs.semver_labels) }}
-          PR_TITLE: ${{ inputs.pr_title }}
-
-      - name: Check Outputs
-        run: |
-          echo ${{ steps.check_version.outputs.found_match }}
-          echo ${{ steps.check_version.outputs.label_to_apply }}
-
-      - name: Label PR
-        if: steps.check_version.outputs.found_match == 'true'
-        run: |
-          curl \
-            -X POST \
-            -H "Authorization: token ${{ env.GH_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ env.GH_REPO }}/issues/${{ env.NUMBER }}/labels \
-            -d '{
-              "labels": ["${{ env.LABELS }}"]
-            }'
-        env:
-          GH_TOKEN: ${{ inputs.github_token }}
-          GH_REPO: ${{ inputs.repository }}
-          NUMBER: ${{ inputs.pr_number }}
-          LABELS: "${{ steps.check_version.outputs.label_to_apply }}"
-
+name: 'PR Semver Labeler'
+description: 'Add a label to PRs based on semver in title'
+inputs:
+  token:
+    description: 'GitHub token'
+    required: true
+  labels:
+    description: 'JSON string of labels'
+    required: true
+runs:
+  using: 'node20'
+  main: 'index.js'
