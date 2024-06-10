@@ -1,12 +1,12 @@
 const core = require('@actions/core');
-const { GitHub, context } = require('@actions/github');
+const github = require("@actions/github");
 
 async function run() {
   try {
     const token = core.getInput('token');
     const semverLabelsInput = core.getInput('semver_labels');
     const semverLabels = JSON.parse(semverLabelsInput);
-    const pr = context.payload.pull_request;
+    const pr = github.context.payload.pull_request;
 
     if (!pr) {
       console.log('No pull request, exiting');
@@ -29,9 +29,10 @@ async function run() {
         labelToAdd = semverLabels.majorLabel;
       }
 
-      const octokit = new GitHub(token);
+      const octokit = github.getOctokit(token);
       await octokit.issues.addLabels({
-        ...context.repo,
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
         issue_number: pr.number,
         labels: [labelToAdd],
       });
