@@ -87,6 +87,19 @@ describe('patch release (x.y.z where z != 0)', () => {
     expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'patch');
     expect(mockSetOutput).toHaveBeenCalledWith('semver',      '2.3.7');
   });
+
+  test('uses the LAST semver in title (Dependabot "from X to Y" style)', async () => {
+    setPRTitle('chore(deps): bump lodash from 2.0.0 to 2.0.1');
+    await run();
+
+    // Should resolve to 2.0.1 (the new version), not 2.0.0 (the old version)
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '2.0.1');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'patch');
+    expect(mockSetOutput).toHaveBeenCalledWith('label',       'patch-release');
+    expect(mockAddLabels).toHaveBeenCalledWith(expect.objectContaining({
+      labels: ['patch-release'],
+    }));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -139,6 +152,25 @@ describe('custom label overrides', () => {
       labels: ['enhancement'],
     }));
     expect(mockSetOutput).toHaveBeenCalledWith('label', 'enhancement');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Outputs set before API call (survive labeling failures)
+// ---------------------------------------------------------------------------
+describe('outputs survive API failure', () => {
+  test('version outputs are set even when addLabels throws', async () => {
+    mockAddLabels.mockRejectedValueOnce(new Error('Label does not exist'));
+    setPRTitle('Release 1.2.0');
+    await run();
+
+    // Core version outputs must be present despite the API error
+    expect(mockSetOutput).toHaveBeenCalledWith('matched',     'true');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '1.2.0');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'minor');
+    expect(mockSetOutput).toHaveBeenCalledWith('label',       'minor-release');
+    // The action should still report failure
+    expect(mockSetFailed).toHaveBeenCalledWith('Label does not exist');
   });
 });
 
