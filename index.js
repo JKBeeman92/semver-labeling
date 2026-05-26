@@ -14,14 +14,16 @@ async function run() {
       return;
     }
 
-    const match = pr.title.match(/\b(\d+)\.(\d+)\.(\d+)\b/);
-    if (!match) {
+    // Use the LAST semver match in the title so that "from X to Y" style titles
+    // (e.g. Dependabot) resolve to the new version (Y) rather than the old one (X).
+    const matches = [...pr.title.matchAll(/\b(\d+)\.(\d+)\.(\d+)\b/g)];
+    if (matches.length === 0) {
       core.info('No semver found in PR title — skipping.');
       core.setOutput('matched', 'false');
       return;
     }
 
-    const [, major, minor, patch] = match;
+    const [, major, minor, patch] = matches[matches.length - 1];
     const semver = `${major}.${minor}.${patch}`;
 
     let semverType;
@@ -32,14 +34,8 @@ async function run() {
     const labelMap   = { major: majorLabel, minor: minorLabel, patch: patchLabel };
     const labelToAdd = labelMap[semverType];
 
-    const octokit = github.getOctokit(token);
-    await octokit.rest.issues.addLabels({
-      owner:        github.context.repo.owner,
-      repo:         github.context.repo.repo,
-      issue_number: pr.number,
-      labels:       [labelToAdd],
-    });
-
+    // Set outputs before the API call so callers always receive version data,
+    // even if the labeling step fails (e.g. label doesn't exist in the repo).
     core.setOutput('matched',     'true');
     core.setOutput('semver',      semver);
     core.setOutput('major',       major);
@@ -47,6 +43,14 @@ async function run() {
     core.setOutput('patch',       patch);
     core.setOutput('semver_type', semverType);
     core.setOutput('label',       labelToAdd);
+
+    const octokit = github.getOctokit(token);
+    await octokit.rest.issues.addLabels({
+      owner:        github.context.repo.owner,
+      repo:         github.context.repo.repo,
+      issue_number: pr.number,
+      labels:       [labelToAdd],
+    });
 
   } catch (error) {
     core.setFailed(error.message);
