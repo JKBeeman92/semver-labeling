@@ -3,10 +3,11 @@ const github = require('@actions/github');
 
 async function run() {
   try {
-    const token      = core.getInput('token');
-    const majorLabel = core.getInput('major_label');
-    const minorLabel = core.getInput('minor_label');
-    const patchLabel = core.getInput('patch_label');
+    const token           = core.getInput('token');
+    const majorLabel      = core.getInput('major_label');
+    const minorLabel      = core.getInput('minor_label');
+    const patchLabel      = core.getInput('patch_label');
+    const preReleaseLabel = core.getInput('pre_release_label');
 
     const pr = github.context.payload.pull_request;
     if (!pr) {
@@ -14,24 +15,34 @@ async function run() {
       return;
     }
 
-    // Use the LAST semver match in the title so that "from X to Y" style titles
-    // (e.g. Dependabot) resolve to the new version (Y) rather than the old one (X).
-    const matches = [...pr.title.matchAll(/\b(\d+)\.(\d+)\.(\d+)\b/g)];
+    // Match full semver strings including optional pre-release identifiers
+    // (e.g. 1.2.3, 1.2.3-beta.1, 2.0.0-rc.2). Use the LAST match in the
+    // title so "from X to Y" style titles (e.g. Dependabot) resolve to the
+    // new version (Y) rather than the old one (X).
+    const matches = [...pr.title.matchAll(/\b(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9][a-zA-Z0-9.-]*)?\b/g)];
     if (matches.length === 0) {
       core.info('No semver found in PR title — skipping.');
       core.setOutput('matched', 'false');
       return;
     }
 
-    const [, major, minor, patch] = matches[matches.length - 1];
-    const semver = `${major}.${minor}.${patch}`;
+    const [, major, minor, patch, preRelease] = matches[matches.length - 1];
+    const semver = preRelease
+      ? `${major}.${minor}.${patch}${preRelease}`
+      : `${major}.${minor}.${patch}`;
 
     let semverType;
-    if (patch !== '0')      semverType = 'patch';
+    if (preRelease)         semverType = 'pre-release';
+    else if (patch !== '0') semverType = 'patch';
     else if (minor !== '0') semverType = 'minor';
     else                    semverType = 'major';
 
-    const labelMap   = { major: majorLabel, minor: minorLabel, patch: patchLabel };
+    const labelMap = {
+      major:         majorLabel,
+      minor:         minorLabel,
+      patch:         patchLabel,
+      'pre-release': preReleaseLabel,
+    };
     const labelToAdd = labelMap[semverType];
 
     // Set outputs before the API call so callers always receive version data,
@@ -41,6 +52,7 @@ async function run() {
     core.setOutput('major',       major);
     core.setOutput('minor',       minor);
     core.setOutput('patch',       patch);
+    core.setOutput('pre_release', preRelease ?? '');
     core.setOutput('semver_type', semverType);
     core.setOutput('label',       labelToAdd);
 

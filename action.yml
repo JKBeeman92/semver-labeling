@@ -20,19 +20,25 @@ inputs:
     description: 'Label to apply for patch version bumps (e.g. 1.0.1). Defaults to "patch-release".'
     required: false
     default: 'patch-release'
+  pre_release_label:
+    description: 'Label to apply for pre-release versions (e.g. 1.2.3-beta.1, 2.0.0-rc.2). Defaults to "pre-release".'
+    required: false
+    default: 'pre-release'
 outputs:
   matched:
     description: "'true' if a semver string was found in the PR title, 'false' otherwise"
   semver:
-    description: "Full version string found in the PR title (e.g. '2.3.1')"
+    description: "Full version string found in the PR title including any pre-release identifier (e.g. '2.3.1', '2.3.1-beta.1')"
   major:
     description: "Major version component"
   minor:
     description: "Minor version component"
   patch:
     description: "Patch version component"
+  pre_release:
+    description: "Pre-release identifier if present, empty string otherwise (e.g. '-beta.1', '-rc.2')"
   semver_type:
-    description: "Detected release type: 'major', 'minor', or 'patch'"
+    description: "Detected release type: 'major', 'minor', 'patch', or 'pre-release'"
   label:
     description: "The label that was applied to the PR"
 runs:
