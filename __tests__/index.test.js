@@ -1,5 +1,5 @@
 /**
- * Tests for semver-labeling GitHub Action (v2)
+ * Tests for semver-labeling GitHub Action (v2.1)
  *
  * Strategy: mock @actions/core and @actions/github so the action logic
  * can run without a real GitHub context or token.
@@ -31,20 +31,21 @@ jest.mock('@actions/github', () => ({
   context:    mockContext,
 }));
 
-const core        = require('@actions/core');
-const { run }     = require('../index');
+const core    = require('@actions/core');
+const { run } = require('../index');
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function setInputs({ token = 'fake-token', majorLabel, minorLabel, patchLabel } = {}) {
+function setInputs({ token = 'fake-token', majorLabel, minorLabel, patchLabel, preReleaseLabel } = {}) {
   core.getInput.mockImplementation((name) => {
     const map = {
       token,
-      major_label: majorLabel ?? 'major-release',
-      minor_label: minorLabel ?? 'minor-release',
-      patch_label: patchLabel ?? 'patch-release',
+      major_label:       majorLabel       ?? 'major-release',
+      minor_label:       minorLabel       ?? 'minor-release',
+      patch_label:       patchLabel       ?? 'patch-release',
+      pre_release_label: preReleaseLabel  ?? 'pre-release',
     };
     return map[name] ?? '';
   });
@@ -75,6 +76,7 @@ describe('patch release (x.y.z where z != 0)', () => {
     expect(mockSetOutput).toHaveBeenCalledWith('major',       '1');
     expect(mockSetOutput).toHaveBeenCalledWith('minor',       '0');
     expect(mockSetOutput).toHaveBeenCalledWith('patch',       '1');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '');
     expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'patch');
     expect(mockSetOutput).toHaveBeenCalledWith('label',       'patch-release');
     expect(mockSetFailed).not.toHaveBeenCalled();
@@ -117,6 +119,7 @@ describe('minor release (x.y.0 where y != 0)', () => {
     expect(mockSetOutput).toHaveBeenCalledWith('semver',      '1.2.0');
     expect(mockSetOutput).toHaveBeenCalledWith('patch',       '0');
     expect(mockSetOutput).toHaveBeenCalledWith('minor',       '2');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '');
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
 });
@@ -135,7 +138,67 @@ describe('major release (x.0.0)', () => {
     expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'major');
     expect(mockSetOutput).toHaveBeenCalledWith('semver',      '2.0.0');
     expect(mockSetOutput).toHaveBeenCalledWith('major',       '2');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '');
     expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pre-release versions
+// ---------------------------------------------------------------------------
+describe('pre-release versions', () => {
+  test('beta pre-release: sets semver_type=pre-release and pre_release output', async () => {
+    setPRTitle('Release 1.2.3-beta.1');
+    await run();
+
+    expect(mockAddLabels).toHaveBeenCalledWith(expect.objectContaining({
+      labels: ['pre-release'],
+    }));
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '1.2.3-beta.1');
+    expect(mockSetOutput).toHaveBeenCalledWith('major',       '1');
+    expect(mockSetOutput).toHaveBeenCalledWith('minor',       '2');
+    expect(mockSetOutput).toHaveBeenCalledWith('patch',       '3');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '-beta.1');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'pre-release');
+    expect(mockSetOutput).toHaveBeenCalledWith('label',       'pre-release');
+    expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+
+  test('rc pre-release: 2.0.0-rc.2', async () => {
+    setPRTitle('Release 2.0.0-rc.2');
+    await run();
+
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '2.0.0-rc.2');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '-rc.2');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'pre-release');
+  });
+
+  test('alpha pre-release without dot-number: 1.0.0-alpha', async () => {
+    setPRTitle('Release 1.0.0-alpha');
+    await run();
+
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '1.0.0-alpha');
+    expect(mockSetOutput).toHaveBeenCalledWith('pre_release', '-alpha');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'pre-release');
+  });
+
+  test('custom pre_release_label override', async () => {
+    setInputs({ preReleaseLabel: 'do-not-merge' });
+    setPRTitle('Release 2.0.0-rc.1');
+    await run();
+
+    expect(mockAddLabels).toHaveBeenCalledWith(expect.objectContaining({
+      labels: ['do-not-merge'],
+    }));
+    expect(mockSetOutput).toHaveBeenCalledWith('label', 'do-not-merge');
+  });
+
+  test('Dependabot pre-release: last version wins', async () => {
+    setPRTitle('chore(deps): bump lib from 1.0.0 to 2.0.0-beta.1');
+    await run();
+
+    expect(mockSetOutput).toHaveBeenCalledWith('semver',      '2.0.0-beta.1');
+    expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'pre-release');
   });
 });
 
@@ -164,12 +227,10 @@ describe('outputs survive API failure', () => {
     setPRTitle('Release 1.2.0');
     await run();
 
-    // Core version outputs must be present despite the API error
     expect(mockSetOutput).toHaveBeenCalledWith('matched',     'true');
     expect(mockSetOutput).toHaveBeenCalledWith('semver',      '1.2.0');
     expect(mockSetOutput).toHaveBeenCalledWith('semver_type', 'minor');
     expect(mockSetOutput).toHaveBeenCalledWith('label',       'minor-release');
-    // The action should still report failure
     expect(mockSetFailed).toHaveBeenCalledWith('Label does not exist');
   });
 });

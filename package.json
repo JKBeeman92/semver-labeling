@@ -1,6 +1,6 @@
 {
   "name": "semver-labeling",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "GitHub Action to detect a semantic version in a PR title, apply a label, and expose parsed version data as outputs",
   "main": "index.js",
   "scripts": {
