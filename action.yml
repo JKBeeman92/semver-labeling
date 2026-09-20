@@ -1,5 +1,5 @@
 name: 'PR Semver Labeler'
-description: 'Detects a semantic version in a PR title, applies a label, and exposes parsed version data as outputs for use in downstream steps.'
+description: 'Detects a semantic version in a PR title, applies a label, and exposes the version data as step outputs.'
 author: 'JKBeeman92'
 branding:
   color: 'green'
