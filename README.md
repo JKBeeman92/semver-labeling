@@ -144,6 +144,18 @@ Releasing is automatic — there is no manual version bump or tag push:
 2. `release-please` opens (and keeps up to date) a "release PR" that bumps `package.json`'s version and updates `CHANGELOG.md` based on the commits since the last release.
 3. Merging that release PR triggers the `Release` workflow, which tags the commit (e.g. `v2.2.0`), publishes a GitHub Release, rebuilds `dist/` for that tag, and moves the floating major-version tag (e.g. `v2`) to point at it — so consumers pinned to `uses: JKBeeman92/semver-labeling@v2` automatically pick up non-breaking releases.
 
+**Do not use GitHub's "Draft a new release" screen to cut a release for this repo.** It creates a tag directly, bypassing release-please entirely — `package.json`/`CHANGELOG.md`/the manifest are left pointing at a version that no longer matches the actual latest tag, and the open release-please PR becomes stale (its own tag creation then fails or conflicts). If that ever happens again, realign `package.json`, `package-lock.json`, and `.release-please-manifest.json` to the tag that got published, in a normal PR, before merging anything else.
+
+### Publishing to the GitHub Marketplace
+
+Marketplace publishing is a separate, manual, browser-only step — GitHub requires 2FA confirmation through the web UI for it, so nothing in this repo's automation can do it for you. Once release-please has published a release (per above):
+
+1. Go to that release on the **Releases** page and click **Edit**.
+2. Check **"Publish this [name] to the GitHub Marketplace."**
+3. Save — do **not** start a new draft release to do this; editing the existing one keeps its tag as the single source of truth.
+
+The floating major tag (e.g. `v2`) is unrelated to Marketplace listing — it's what makes `uses: ...@v2` resolve at all, and `release.yml` maintains it automatically after every release. It only needs manual attention once, when a major line is first created (see the `v2` tag's own history for how that was bootstrapped: `git tag v2 v2.0.1 && git push origin v2`, or the equivalent through the Releases UI by publishing a pre-release tagged `v2` targeting the desired commit).
+
 ### Building
 
 This is a JavaScript action with no build step at runtime — GitHub checks out the repo as-is and runs `dist/index.js` directly (`node_modules` is **not** committed; see `action.yml`'s `main:`). `dist/index.js` is a bundled, dependency-inlined copy of `index.js`, produced with [`@vercel/ncc`](https://github.com/vercel/ncc):
