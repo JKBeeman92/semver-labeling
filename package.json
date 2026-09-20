@@ -4,7 +4,8 @@
   "description": "GitHub Action to detect a semantic version in a PR title, apply a label, and expose parsed version data as outputs",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "ncc build index.js -o dist --license licenses.txt"
   },
   "author": "JKBeeman92",
   "license": "MIT",
@@ -13,6 +14,7 @@
     "@actions/github": "^8.0.1"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.45.0",
     "jest": "^30.4.2"
   }
 }
