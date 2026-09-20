@@ -43,4 +43,4 @@ outputs:
     description: "The label that was applied to the PR"
 runs:
   using: 'node20'
-  main: 'index.js'
+  main: 'dist/index.js'

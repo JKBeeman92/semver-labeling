@@ -12,6 +12,18 @@ updates:
       day: "wednesday"
       time: "14:00"
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    ignore:
+      # @actions/core v3 and @actions/github v9 are ESM-only, which breaks
+      # `require()` in this CommonJS action. Stay on the last CJS releases
+      # until index.js is migrated to ESM.
+      - dependency-name: "@actions/core"
+        versions: [">=3.0.0"]
+      - dependency-name: "@actions/github"
+        versions: [">=9.0.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -20,3 +32,6 @@ updates:
       day: "wednesday"
       time: "14:00"
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ci"
+      include: "scope"

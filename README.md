@@ -1,5 +1,7 @@
 # Semver Labeling
 
+[![CI](https://github.com/JKBeeman92/semver-labeling/actions/workflows/ci.yml/badge.svg)](https://github.com/JKBeeman92/semver-labeling/actions/workflows/ci.yml)
+
 A reusable GitHub Action that detects a semantic version in a PR title, applies a label based on the release type, and exposes the parsed version data as step outputs — so downstream steps can branch on it without re-parsing.
 
 ## Inputs
@@ -115,6 +117,43 @@ jobs:
         if: steps.semver.outputs.semver_type == 'major'
         run: echo "Major release — running extra checks"
 ```
+
+## Development
+
+### Branching
+
+- **`main`** — always releasable. Every merge to `main` is evaluated for release by [release-please](https://github.com/googleapis/release-please) (see below). Protected; changes land via pull request only.
+- **`develop`** — integration branch for work in progress. Feature and fix branches target `develop`; `develop` is periodically merged into `main` (or individual fixes are cherry-picked/PR'd to `main` directly for hotfixes).
+
+### Pull request titles
+
+PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, etc.) — this is enforced by the `PR Title` workflow. Since PRs are squash-merged, the PR title becomes the commit message on `main`, which is what [release-please](https://github.com/googleapis/release-please) reads to determine the next version:
+
+| Prefix | Effect |
+|---|---|
+| `fix:` | patch release |
+| `feat:` | minor release |
+| `feat!:` / `fix!:` / any type with `!` / a `BREAKING CHANGE:` footer | major release |
+| `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `build:`, `ci:` | no release, included in changelog per type |
+
+### Releasing
+
+Releasing is automatic — there is no manual version bump or tag push:
+
+1. Merge conventional-commit PRs to `main`.
+2. `release-please` opens (and keeps up to date) a "release PR" that bumps `package.json`'s version and updates `CHANGELOG.md` based on the commits since the last release.
+3. Merging that release PR triggers the `Release` workflow, which tags the commit (e.g. `v2.2.0`), publishes a GitHub Release, rebuilds `dist/` for that tag, and moves the floating major-version tag (e.g. `v2`) to point at it — so consumers pinned to `uses: JKBeeman92/semver-labeling@v2` automatically pick up non-breaking releases.
+
+### Building
+
+This is a JavaScript action with no build step at runtime — GitHub checks out the repo as-is and runs `dist/index.js` directly (`node_modules` is **not** committed; see `action.yml`'s `main:`). `dist/index.js` is a bundled, dependency-inlined copy of `index.js`, produced with [`@vercel/ncc`](https://github.com/vercel/ncc):
+
+```bash
+npm run build   # regenerates dist/
+npm test        # runs the Jest suite against the unbundled index.js
+```
+
+CI fails any PR where `dist/` doesn't match a fresh `npm run build` of `index.js`, so always run `npm run build` and commit the result after touching `index.js` or its dependencies.
 
 ## Migration from v1
 
